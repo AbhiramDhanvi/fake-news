@@ -11,6 +11,7 @@ import ShaderAnimation from './components/ShaderAnimation'
 import Comparison from './components/Comparison'
 import Chatbot from './components/Chatbot'
 import Contact from './components/Contact'
+import Community from './components/Community'
 import Footer from './components/Footer'
 
 function App() {
@@ -46,6 +47,7 @@ function App() {
         <ShaderAnimation />
         <Comparison />
         <Contact />
+        <Community />
       </main>
       <Footer />
       <Chatbot articleText={currentArticleText} />

@@ -11,7 +11,7 @@ export default function Footer() {
   return (
     <footer id="footer" className="footer">
       <div className="container">
-        <div className="footer-grid">
+        <div className="footer-grid footer-grid-6">
           <div className="footer-brand">
             <a href="#" className="navbar-brand">
               <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
@@ -36,16 +36,35 @@ export default function Footer() {
             <h4>Resources</h4>
             <a href="#">Documentation</a>
             <a href="#">API Reference</a>
-            <a href="#">Blog</a>
+            <a href="#">Blog / Insights</a>
             <a href="#">Changelog</a>
+            <a href="#">Cite TruthLens</a>
+          </div>
+
+          <div className="footer-links-group">
+            <h4>Developers</h4>
+            <a href="#">API Docs</a>
+            <a href="#">SDK Reference</a>
+            <a href="#">Methodology</a>
+            <a href="#">Open Data</a>
+          </div>
+
+          <div className="footer-links-group">
+            <h4>Community</h4>
+            <a href="#community">Discussions forum</a>
+            <a href="#community">Submit an article</a>
+            <a href="#community">Live sessions</a>
+            <a href="#">Community guidelines</a>
+            <a href="#">Suggest a fact-checker</a>
           </div>
 
           <div className="footer-links-group">
             <h4>Company</h4>
-            <a href="#">About</a>
+            <a href="#">About us</a>
             <a href="#contact">Contact</a>
             <a href="#">Privacy</a>
             <a href="#">Terms</a>
+            <a href="#">Accessibility</a>
           </div>
         </div>
 
@@ -54,6 +73,7 @@ export default function Footer() {
           <div className="footer-bottom-links">
             <a href="#">Privacy Policy</a>
             <a href="#">Terms of Service</a>
+            <a href="#">Accessibility Statement</a>
           </div>
         </div>
       </div>

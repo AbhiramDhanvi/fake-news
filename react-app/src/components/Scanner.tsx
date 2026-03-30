@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react'
 import type { RefObject } from 'react'
+import NewsArticlesPanel from './NewsArticlesPanel'
 import DisclaimerPanel from './DisclaimerPanel'
 
 interface ScannerProps {
@@ -486,6 +487,9 @@ export default function Scanner({ scannerRef, onAnalysisComplete }: ScannerProps
 
                   {/* Disclaimer */}
                   <DisclaimerPanel />
+
+                  {/* S3e: News Articles Link Section */}
+                  <NewsArticlesPanel verdict={verdict} inputText={activeTab === 'text' ? textInput : urlInput} />
 
                   {/* Explanation */}
                   <div className="explanation-panel" id="explanation-panel">

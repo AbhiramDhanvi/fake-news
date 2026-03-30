@@ -508,6 +508,186 @@ AUDIENCE:       Journalists, researchers, developers, publishers, educators
     users may over-rely on AI output for high-stakes editorial decisions
 
 
+── S3e: NEWS ARTICLES LINK SECTION ───────────────────────────────────────────
+
+  TYPE:         Scrollable reference panel — appears directly below the
+                disclaimer panel (S3d) after a scan completes
+  PLACEMENT:    Immediately below S3d disclaimer, before the mini source
+                graph — part of the results panel, always visible when a
+                scan result is shown
+  BACKGROUND:   #0F1018
+  BORDER-TOP:   1px solid rgba(255,255,255,0.08) — visual separator
+
+  SECTION LABEL:
+    Text:     "Articles analysed in this scan"
+    Font:     11px, uppercase, letter-spacing 1.2px
+    Color:    rgba(255,255,255,0.40)
+    Icon:     Newspaper/link SVG icon, 14×14px, inline-left
+
+  ── TAB BAR (4 tabs, toggles which link set is visible) ─────────────────────
+
+    Tab 1 — "Sources used"          (default active)
+    Tab 2 — "Related articles"
+    Tab 3 — "Previously scanned"
+    Tab 4 — "Fact-check orgs"
+
+    Tab style:
+      Active:   bg rgba(37,99,235,0.18), color #FFFFFF,
+                border-bottom: 2px solid #2563EB
+      Inactive: color rgba(255,255,255,0.40), no border
+      Font:     DM Sans 500, 12px
+      Padding:  8px 14px
+      Tab bar border-bottom: 1px solid rgba(255,255,255,0.08)
+
+  ── TAB 1: SOURCES USED ─────────────────────────────────────────────────────
+
+    Description: All external URLs the 5-agent system fetched, cited, or
+                 cross-referenced while generating the verdict. Grouped by
+                 verdict contribution (supporting / contradicting).
+
+    SUBSECTION — Supporting sources:
+      Header:   "Supporting sources" — green dot + label, 12px
+      Item card row:
+        [16px favicon] [Domain name] [Article headline — 60-char truncation]
+        [Credibility score badge] [Contribution tag] [→ Open link]
+
+      Credibility badge colours:
+        Score 80–100: bg rgba(16,185,129,0.15),  color #10B981  (trusted)
+        Score 50–79:  bg rgba(245,158,11,0.15),   color #F59E0B  (mixed)
+        Score 0–49:   bg rgba(239,68,68,0.15),    color #EF4444  (low trust)
+
+      Contribution tag (pill):
+        "Supports claim #N"    — bg rgba(37,99,235,0.15),  color #2563EB
+        "Contradicts claim #N" — bg rgba(239,68,68,0.15),  color #EF4444
+
+    SUBSECTION — Contradicting sources:
+      Header:   "Contradicting sources" — red dot + label, 12px
+      Items:    Same card row format as supporting sources
+
+    MAX VISIBLE: 6 rows (3 supporting + 3 contradicting), then
+      "Show all N sources →" expand link — 12px, color #2563EB
+
+    EMPTY STATE:
+      Icon:   Search icon 24px, rgba(255,255,255,0.20)
+      Text:   "No external sources retrieved for this scan."
+      Sub:    "Try scanning a URL for richer source data."
+
+  ── TAB 2: RELATED ARTICLES ─────────────────────────────────────────────────
+
+    Description: Articles covering the same event or topic, surfaced from
+                 across the web so users can compare different coverage angles.
+
+    LAYOUT:    2-column card grid, max 8 cards
+
+    Article card:
+      Top:    Domain favicon + name (left) | Published date (right)
+      Mid:    Headline — 2-line clamp, DM Sans 400, 14px, color #FFFFFF
+      Bottom: "Scan this article →" ghost button (11px)
+              Clicking pre-loads that URL into the S3 input and triggers a scan
+
+      Card style:
+        bg: #141520, border: 1px solid rgba(255,255,255,0.06)
+        border-radius: 8px, padding: 12px
+        Hover: border-color rgba(255,255,255,0.14), translateY(-2px)
+
+    EMPTY STATE:
+      Text: "No related articles found."
+      Sub:  "May occur for very niche or recently published stories."
+
+  ── TAB 3: PREVIOUSLY SCANNED ───────────────────────────────────────────────
+
+    Description: Public community archive — articles scanned by other
+                 TruthLens users whose results are shared publicly.
+                 Lets users review community verdicts before running their own.
+
+    FILTER ROW:
+      Dropdown 1: "All verdicts" | "Likely True" | "Misleading" |
+                  "Likely False" | "Unverified"
+      Dropdown 2: "Any topic" | "Politics" | "Health" | "Science" |
+                  "Finance" | "Other"
+      Search:     "Search scanned articles..." — filters by headline keyword
+
+    LIST ITEMS (max 10, paginated):
+      [Verdict badge] [Headline, 2-line clamp] [Domain] [Scanned: X days ago]
+      Community confidence bar — thin, 80px, reflects aggregate public confidence
+      "View full report →" links to /report/{scanId}
+
+      Verdict badge colours: same as S3 results panel (True/False/Misleading/Unverified)
+
+    PAGINATION: "← Previous" / "Next →" at bottom, muted style
+    NOTE: Users must opt-in to share their scan results publicly (privacy
+          toggle in settings). Default is private.
+
+  ── TAB 4: FACT-CHECK ORGS ──────────────────────────────────────────────────
+
+    Description: Curated list of trusted external fact-checking organisations
+                 the user can consult directly for the same story.
+
+    HEADER NOTE:
+      "TruthLens cross-references these organisations in every scan.
+       Verify findings directly at the source."
+      Font: 12px, color rgba(255,255,255,0.45), italic, margin-bottom 12px
+
+    ORG CARDS (2-column grid, up to 12 orgs):
+
+      Card — Snopes
+        Logo:  snopes.com favicon + wordmark
+        Tag:   "General fact-checking"  (blue pill)
+        Link:  "Search Snopes →"
+               opens https://snopes.com/search?q={headline_from_scan}
+
+      Card — PolitiFact
+        Logo:  politifact.com favicon + wordmark
+        Tag:   "Political claims"  (blue pill)
+        Link:  "Search PolitiFact →"
+
+      Card — FactCheck.org
+        Logo:  factcheck.org favicon + wordmark
+        Tag:   "US politics & science"  (blue pill)
+        Link:  "Search FactCheck.org →"
+
+      Card — Reuters Fact Check
+        Logo:  reuters.com favicon + wordmark
+        Tag:   "Global news"  (blue pill)
+        Link:  "Search Reuters →"
+
+      Card — AP Fact Check
+        Logo:  apnews.com favicon + wordmark
+        Tag:   "Breaking news"  (blue pill)
+        Link:  "Search AP →"
+
+      Card — Full Fact (UK)
+        Logo:  fullfact.org favicon + wordmark
+        Tag:   "UK / EU claims"  (blue pill)
+        Link:  "Search Full Fact →"
+
+      Card — Africa Check
+        Logo:  africacheck.org favicon + wordmark
+        Tag:   "African news"  (blue pill)
+        Link:  "Search Africa Check →"
+
+      Card — Boom Live
+        Logo:  boomlive.in favicon + wordmark
+        Tag:   "South / Southeast Asia"  (blue pill)
+        Link:  "Search Boom Live →"
+
+    FOOTER NOTE:
+      "Know a fact-checker we've missed?"
+      "Suggest an organisation →" — links to /community/suggest-org
+      Font: 11px, color rgba(255,255,255,0.30)
+
+  CARD / ROW STYLE (all tabs):
+    Row:    border-bottom: 1px solid rgba(255,255,255,0.06), padding: 10px 0
+    Hover:  bg rgba(255,255,255,0.02)
+    Open link icon: external-link SVG 12px, rgba(255,255,255,0.40)
+
+  WQF COMPARISON:
+    WQF has NO equivalent — S3e is unique to a live fact-checking product
+    It transforms a single verdict into a full research toolkit:
+    users can trace evidence, compare coverage, and go direct to trusted orgs
+    Every link deepens trust and reduces over-reliance on AI output alone
+
+
 ── S4: HOW IT WORKS ───────────────────────────────────────────────────────────
 
   TYPE:         5-step horizontal pipeline (step cards)
@@ -1102,7 +1282,7 @@ AUDIENCE:       Journalists, researchers, developers, publishers, educators
   TYPE:         Multi-column dark footer
   BACKGROUND:   #060608
 
-  FOOTER TOP (5-column grid):
+  FOOTER TOP (6-column grid):
 
     Column 1 — Brand (2fr width):
       Logo:       "Truth" + "Lens" (blue accent on Lens)
@@ -1150,7 +1330,16 @@ AUDIENCE:       Journalists, researchers, developers, publishers, educators
         - Blog / Insights
         - Cite TruthLens
 
-    Column 5 — Company:
+    Column 5 — Community:
+      Links:
+        - Discussions forum
+        - Submit an article
+        - Live sessions
+        - Community guidelines
+        - Moderation team
+        - Suggest a fact-checker
+
+    Column 6 — Company:
       Links:
         - About us
         - Team
@@ -1208,6 +1397,272 @@ AUDIENCE:       Journalists, researchers, developers, publishers, educators
     - Accessibility statement ← Good practice, required in some regions
 
 
+
+
+── S_COMMUNITY: COMMUNITY HUB (DEDICATED PAGE — /community) ──────────────────
+
+  TYPE:         Standalone page accessible from footer (Community column)
+                and from a "Community" link added to the navbar
+  URL:          /community
+  BACKGROUND:   #0A0A0F (matches main site dark theme)
+  PAGE TITLE:   "TruthLens Community — Verify Together"
+
+  PURPOSE:
+    A structured space for users to discuss news verification, submit articles
+    for collective fact-checking, and collaborate in real time during scans.
+    Not a social media feed — curated, moderation-first, mission-aligned.
+
+  ── COMMUNITY NAVBAR ────────────────────────────────────────────────────────
+
+    Reuses global S1 sticky navbar with one addition:
+    "Community" link is highlighted as active (white, underline or blue)
+    Sub-tabs appear below the main navbar (sticky on scroll):
+      [Discussions]  [Submit an article]  [Live sessions]
+      Font: DM Sans 500, 13px | Active tab: border-bottom 2px #2563EB
+
+  ── PAGE HERO (abbreviated, not full-screen) ────────────────────────────────
+
+    Height:       280px
+    Background:   #0F1018 with subtle shader ambient layer
+                  (500 particles, opacity 0.15 — same params as S2 hero)
+
+    Title:        "Verify together."
+                  Font: Syne 800, 42px, letter-spacing: -2px
+    Sub:          "Join the community of journalists, researchers, and
+                   curious readers fighting misinformation — one article
+                   at a time."
+                  Font: DM Sans 300, 15px, rgba(255,255,255,0.60)
+
+    CTA row (ghost buttons):
+      "Start a discussion"  → #discussions
+      "Submit an article"   → #submit
+      Style: border rgba(255,255,255,0.20), color white, px 16 py 8, radius 6px
+
+  ── TAB 1: DISCUSSIONS — NEWS VERIFICATION FORUM ────────────────────────────
+
+    SECTION ID:   #discussions
+    LAYOUT:       2-column — thread list left (65%) + thread viewer right (35%)
+
+    LEFT — THREAD LIST:
+
+      Filter / sort bar:
+        Dropdown: "All topics" | "Politics" | "Health" | "Science" |
+                  "Climate" | "Finance" | "Conflict" | "Technology"
+        Sort:     "Latest" | "Most discussed" | "Unresolved" | "Trending"
+        Search:   "Search discussions..." — live keyword filter
+
+      Thread card row:
+        [Category pill] [Thread title — 2-line clamp, DM Sans 500, 14px]
+        [Avatar + username] [N replies] [X hours ago]
+        [Verdict tag — only if thread linked to a scan]
+          e.g. "Scan: Misleading" → links to /report/{scanId}
+
+        Thread status badges:
+          "Open"       — green pill  — under active discussion
+          "Resolved"   — blue pill   — community consensus reached
+          "Flagged"    — amber pill  — moderator review pending
+          "Contested"  — red pill    — significant disagreement between users
+
+      Pagination:  20 threads per page, "Load more" button
+
+    RIGHT — THREAD VIEWER (panel, opens on thread click):
+
+      Thread header:
+        Full title, category pill, posted by + timestamp
+        If scan-linked: verdict badge + "View full scan report →"
+
+      Reply cards (chronological, oldest first):
+        [Avatar initials circle] [Username] [Timestamp]
+        [Reply body — DM Sans 14px, line-height 1.65]
+        [👍 Helpful] [🔗 Cite source] [⚑ Flag] action row
+
+        Inline evidence card (when user cites a URL):
+          Compact card: domain favicon + headline + credibility score + verdict
+          Powered by S3 scanning engine — rate-limited to 5 per thread
+          Read-only — no re-scan triggered from viewer
+
+      Reply composer (at bottom of thread viewer):
+        Textarea: "Add your analysis or evidence..."
+        "Link a source" toggle: paste URL → scans inline before posting
+        Submit: "Post reply" button (requires free account)
+
+      Moderation note (bottom):
+        "Replies are reviewed for accuracy and civility.
+         Repeated misinformation sharing may restrict your account."
+        Font: 11px, rgba(255,255,255,0.28)
+
+  ── TAB 2: SUBMIT AN ARTICLE — COMMUNITY FACT-CHECKING ─────────────────────
+
+    SECTION ID:   #submit
+    PURPOSE:      Users submit articles they want the community to
+                  collectively fact-check beyond the AI verdict alone.
+
+    SUBMISSION FORM:
+      Fields:
+        - Article URL (required) — auto-fetches headline on input blur
+        - Or paste article text (toggle — same UX as S3 input bar)
+        - Category: Politics / Health / Science / Climate /
+                    Finance / Conflict / Technology / Other
+        - "Why are you submitting this?" (textarea, max 280 chars)
+          Placeholder: "What specifically concerns you about this article?"
+        - "Make my submission public" checkbox (default: checked)
+        - Submit: "Submit for community review" button, full-width
+
+      Post-submission flow:
+        1. AI pipeline (S3) runs automatically on submitted article
+        2. Scan result shown immediately with S3d disclaimer + S3e links
+        3. Article added to community queue with auto-created discussion thread
+        4. Toast notification: "Submitted! Now open for community discussion."
+
+    COMMUNITY QUEUE (below form):
+      Header:   "Articles awaiting community review"
+      Thread-style card list — same format as Discussions tab
+      Badge:    "N analysts looking at this"  — live count via WebSocket
+      Sort:     "Newest" | "Most viewed" | "High priority"
+
+      Priority flag:
+        Editors/mods can mark items "High priority" — amber left border on card
+        High-priority items appear at top regardless of sort order
+
+    COMMUNITY VERDICT RESOLUTION:
+      When ≥5 verified users agree on a verdict for the same article:
+        Status changes to "Community verdict: [verdict]"
+        A community badge appears on the report page (distinct from AI badge):
+          Label:  "👥 Community verdict"
+          Style:  bg #1A1D2E, border 1px solid #2563EB, color white
+        Both AI verdict and community verdict are shown side by side on
+        /report/{scanId} with clear labels differentiating the two
+
+  ── TAB 3: LIVE SESSIONS — REAL-TIME COLLABORATIVE SCANNING ─────────────────
+
+    SECTION ID:   #live
+    PURPOSE:      Live collaborative rooms where multiple users watch the
+                  same article being analysed in real time and discuss
+                  findings as they appear — scan as a shared experience.
+
+    ACTIVE SESSIONS GRID (2-column):
+      Session card:
+        [🔴 LIVE badge — red pulse animation, 2s loop]
+        [Article headline — 2-line clamp]
+        [Category pill] [N participants online]
+        [Scan progress bar — synced live across all participants]
+        "Join session →" button
+
+        Card style:
+          bg: #141520, border: 1px solid rgba(239,68,68,0.25)
+          border-radius: 10px, padding: 16px
+          Pulsing red glow shadow: 0 0 0 rgba(239,68,68,0.4), animated
+
+    LIVE ROOM (full-screen — /community/live/{sessionId}):
+
+      Top bar:
+        Article headline + domain favicon (left)
+        "N analysts in this session" (center)
+        Session timer: "Started Xm ago" (right)
+
+      LEFT PANEL (60%) — Live scan output:
+        Mirrors S3 scanner results in real time via WebSocket:
+          Agent pipeline animation (steps activate as each completes)
+          Heatmap renders progressively as claims are extracted
+          Evidence cards appear as sources are fetched by evidence agent
+          Verdict badge reveals at end with confidence bar animation
+        All participants see identical state — no individual polling
+
+      RIGHT PANEL (40%) — Live chat:
+        Message stream (newest at bottom, auto-scroll enabled)
+        [Avatar circle] [Username] [HH:MM] [Message text]
+
+        /cite command shortcut:
+          User types: /cite https://example.com
+          System scans URL inline → mini credibility card appears in chat
+          Rate limit: 3 /cite commands per participant per session
+
+        Message reactions: 👍  🤔  ⚠️  🔗
+        Composer: "React to the scan as it happens..."
+        Send button + keyboard shortcut hint (Enter to send)
+        Anti-spam rate limit: 3 messages per 10 seconds
+
+      BOTTOM — Post-verdict summary:
+        Appears after verdict reveals: "Session summary locks in 5 minutes"
+        Participants cast a per-claim vote: ✓ Agree | ✗ Disagree | ? Unsure
+        Aggregate votes shown as small bar chart per claim
+        Session summary saved to community archive with participant count
+
+    START A SESSION (button at top of Live tab):
+      "Start a live session" — URL input → generates unique /live/{id} room
+      Any registered user can start a session; public by default
+      "Invite link" auto-copies to clipboard on room creation
+
+    EMPTY STATE (no active sessions):
+      Icon:  Video camera outline, 32px, rgba(255,255,255,0.20)
+      Text:  "No live sessions right now."
+      Sub:   "Be the first — start a session and scan an article together."
+      CTA:   "Start a session →"
+
+  ── ACCOUNT & MODERATION ────────────────────────────────────────────────────
+
+    ACCESS LEVELS:
+      Anonymous (no account):  Read discussions, browse queue — read-only
+      Free account:            Post replies, submit articles, join live sessions
+      Verified contributor:    Journalist/researcher badge (manual approval)
+                               Can cast community verdicts (counts toward ≥5)
+      Moderator (volunteer):   Resolve threads, flag, remove content, promote items
+                               Shown with "MOD" badge — bg #2563EB, 10px uppercase
+
+    Sign-up prompt: Appears inline (not a blocking modal):
+      bg rgba(37,99,235,0.10), border 1px solid rgba(37,99,235,0.25)
+      "Sign up free to join the discussion →" — one click to registration
+      Does not prevent reading or browsing
+
+    AUTOMATED MODERATION (AI layer):
+      Filters: personal attacks, spam links, doxxing, off-topic noise
+      Flags (does not auto-remove): coordinated posting, mass reports
+      All removals require human moderator confirmation
+
+    USER REPUTATION (on profile page /community/profile/{username}):
+      Accuracy score:       % of community verdicts matching final consensus
+      Contribution count:   Threads started | Replies posted | Articles submitted
+      Verified badge:       Shown on all posts if approved journalist/researcher
+
+  ── COMMUNITY DESIGN SPEC ───────────────────────────────────────────────────
+
+    Backgrounds:      #0A0A0F (page), #141520 (cards), #0F1018 (panels)
+    Brand accent:     #2563EB
+    Live indicator:   #EF4444 (red — real-time presence signal)
+    Resolved green:   #10B981
+    Moderation amber: #F59E0B
+
+    Typography:
+      Page/section heads:  Syne 700, 28–36px
+      Thread titles:       DM Sans 500, 15px
+      Reply body:          DM Sans 400, 14px, line-height 1.65
+      Meta / timestamps:   DM Sans 400, 12px, rgba(255,255,255,0.40)
+      Moderation notices:  11px, rgba(255,255,255,0.30)
+
+  ── /community PAGE SITEMAP ─────────────────────────────────────────────────
+
+    /community                     Hub with all 3 tabs
+    /community/discussions         Standalone thread list
+    /community/discussions/{id}    Single thread view
+    /community/submit              Article submission form + queue
+    /community/live                Active live session grid
+    /community/live/{sessionId}    Single live session room
+    /community/suggest-org         Suggest a fact-check organisation
+    /community/guidelines          Community rules + moderation policy
+    /community/moderators          Moderator team list
+    /community/profile/{username}  User profile + reputation
+
+  WQF COMPARISON:
+    WQF has NO community section — it is a private, invite-only venture studio
+    The /community page has no WQF structural equivalent; closest analogues:
+      Reddit   — threaded discussion model
+      Hypothesis — annotation + evidence linking
+      Discord  — live collaborative chat
+    It elevates TruthLens from a solo scan tool to a collaborative platform.
+    Collective human verification alongside AI is more accurate, more defensible,
+    and generates a proprietary labelled dataset for future model improvement.
+
+
 ────────────────────────────────────────────────────────────────────────────────
   PART 3: SIDE-BY-SIDE SECTION COMPARISON TABLE
 ────────────────────────────────────────────────────────────────────────────────
@@ -1218,6 +1673,7 @@ AUDIENCE:       Journalists, researchers, developers, publishers, educators
   S2  Hero + live input         Hero ("Forging Companies...") + Contact CTA
   S3  Live demo scanner         NO EQUIVALENT — your key differentiator
       └─ 3d Disclaimer panel    NO EQUIVALENT — AI responsibility layer
+      └─ 3e News articles panel  NO EQUIVALENT — source + fact-check org links
   S4  How it works (5 agents)   Our Ethos (4 pillars: Foresight, Support, etc.)
   S5  Feature cards grid        Our Focus (9 tech sector tiles)
   S6  Trust stats bar           NO EQUIVALENT (WQF uses brand credibility)
@@ -1227,7 +1683,11 @@ AUDIENCE:       Journalists, researchers, developers, publishers, educators
   S9.5 Shader animation         NO EQUIVALENT — WebGL "wow" moment
   S10 API for developers        For Investors / For Founders (audience CTAs)
   S11 Contact section           Contact form (very similar structure)
-  S12 Footer                    Footer (4 links vs your 6 + 5 columns)
+  S12 Footer                    Footer (4 links vs your 6 + 6 columns)
+  S_COMMUNITY Community hub (/community) NO EQUIVALENT — collaborative layer
+      └─ Discussions forum        NO EQUIVALENT — community verification threads
+      └─ Submit for fact-check    NO EQUIVALENT — crowd-sourced article queue
+      └─ Live sessions            NO EQUIVALENT — real-time collaborative scan rooms
 
 
 ────────────────────────────────────────────────────────────────────────────────
@@ -1298,17 +1758,36 @@ AUDIENCE:       Journalists, researchers, developers, publishers, educators
     - Link to Methodology, Terms, and Acceptable Use — building trust loop
     A well-designed disclaimer INCREASES credibility; a missing one destroys it.
 
+11. COMMUNITY AS TRUST MULTIPLIER
+    WQF doesn't need a community — it operates with closed, curated networks.
+    Your app fights misinformation: collective human verification alongside AI
+    is both more accurate and more defensible than either alone.
+    - Discussion threads let domain experts (doctors, lawyers, economists)
+      flag what the AI missed — catching edge cases the model cannot handle
+    - Live sessions create shared accountability: many eyes on one article
+    - The community archive becomes a proprietary dataset over time,
+      with crowd-verified labels that can be used to retrain the model
+    - Design the community as read-only-first: browsing needs no account;
+      posting requires free sign-up; moderation uses human + AI layered approach
+    - Community verdicts shown side-by-side with AI verdicts — never replacing,
+      always supplementing — preserving the product's epistemic honesty
+
 
 ────────────────────────────────────────────────────────────────────────────────
   PART 5: PAGES NEEDED (BEYOND HOMEPAGE)
 ────────────────────────────────────────────────────────────────────────────────
 
   MAIN SITE:
-    /                   Homepage (all 12 + S9.5 sections)
-    /demo               Full interactive demo (expanded S3 + disclaimer panel)
+    /                   Homepage (all 12 + S3e + S9.5 sections)
+    /demo               Full interactive demo (S3 + S3e + S3d disclaimer panel)
     /features           Full feature documentation
     /pricing            Detailed pricing comparison table
     /blog               Research articles + insights (like WQF /insights)
+    /community          Community hub (discussions, submissions, live sessions)
+    /community/discussions/{id}  Single thread
+    /community/live/{sessionId}  Live collaborative scan room
+    /community/submit   Article submission queue
+    /community/guidelines Community rules + moderation policy
     /about              Team page (like WQF /about)
 
   DEVELOPER HUB:
