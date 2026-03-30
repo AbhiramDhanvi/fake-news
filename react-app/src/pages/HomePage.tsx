@@ -1,106 +1,143 @@
 import { useRef } from 'react'
 import { Link } from 'react-router-dom'
 import Scanner from '../components/Scanner'
+import Footer from '../components/Footer'
 
 interface HomePageProps {
   onArticleAnalyzed?: (text: string) => void
 }
 
-const AGENT_CHIPS = [
-  { n: '1', label: 'Claim', color: '#6366f1' },
-  { n: '2', label: 'Evidence', color: '#2563EB' },
-  { n: '3', label: 'Credibility', color: '#10B981' },
-  { n: '4', label: 'Bias', color: '#F59E0B' },
-  { n: '5', label: 'Consensus', color: '#ec4899' },
+const STATS = [
+  { num: '99.2%', label: 'Detection Accuracy', icon: '🎯' },
+  { num: '4.2s',  label: 'Avg. Analysis Time', icon: '⚡' },
+  { num: '50k+',  label: 'Articles Scanned',   icon: '📰' },
+  { num: '5',     label: 'AI Agents Working',   icon: '🤖' },
+]
+
+const AGENTS = [
+  { n: '1', name: 'Claim Extraction',    color: '#6366f1', icon: '🔍' },
+  { n: '2', name: 'Evidence Gathering',  color: '#2563EB', icon: '📂' },
+  { n: '3', name: 'Credibility Scoring', color: '#10B981', icon: '⭐' },
+  { n: '4', name: 'Bias Detection',      color: '#F59E0B', icon: '⚖️' },
+  { n: '5', name: 'Consensus Verdict',   color: '#ec4899', icon: '🏛️' },
 ]
 
 export default function HomePage({ onArticleAnalyzed }: HomePageProps) {
   const scannerRef = useRef<HTMLDivElement>(null)
 
   return (
-    <div className="home-page">
-      {/* ── Left: Hero panel ── */}
-      <div className="home-hero-panel">
-        <div className="home-hero-content">
-          <div className="home-hero-badge">
-            <span className="badge-dot" />
-            AI-Powered Fact Checking
+    <div className="home-v2">
+
+      {/* ── HERO ──────────────────────────────────────────────── */}
+      <section className="home-hero-full">
+        {/* Ambient background blobs */}
+        <div className="hero-blob hero-blob-1" />
+        <div className="hero-blob hero-blob-2" />
+        <div className="hero-blob hero-blob-3" />
+
+        <div className="container hero-container">
+          {/* Badge */}
+          <div className="hero-badge">
+            <span className="hero-badge-dot" />
+            AI-Powered Misinformation Detection
           </div>
 
-          <h1 className="home-hero-title">
-            Detect<br />
-            Misinformation<br />
-            <span className="home-hero-accent">Instantly</span>
+          {/* Headline */}
+          <h1 className="hero-headline">
+            See Through the<br />
+            <span className="hero-headline-accent">Noise.</span>{' '}
+            <span className="hero-headline-sub-accent">Instantly.</span>
           </h1>
 
-          <p className="home-hero-sub">
-            Five specialized AI agents analyze any article in real time —
-            extracting claims, gathering evidence, scoring credibility,
-            detecting bias, and delivering a confidence-calibrated verdict.
+          {/* Subtitle */}
+          <p className="hero-subline">
+            Superman Vision uses five specialized AI agents to analyze any news article in
+            real time — extracting claims, gathering evidence, scoring credibility, detecting
+            bias, and delivering a confidence-calibrated verdict you can trust.
           </p>
 
-          {/* Stats */}
-          <div className="home-stats-row">
-            <div className="home-stat">
-              <span className="home-stat-num">99.2<span className="home-stat-suffix">%</span></span>
-              <span className="home-stat-lab">Accuracy</span>
-            </div>
-            <div className="home-stat-div" />
-            <div className="home-stat">
-              <span className="home-stat-num">4.2<span className="home-stat-suffix">s</span></span>
-              <span className="home-stat-lab">Avg. analysis</span>
-            </div>
-            <div className="home-stat-div" />
-            <div className="home-stat">
-              <span className="home-stat-num">50<span className="home-stat-suffix">k+</span></span>
-              <span className="home-stat-lab">Scanned</span>
-            </div>
-          </div>
-
           {/* CTAs */}
-          <div className="home-cta-row">
-            <Link to="/how-it-works" className="btn btn-outline btn-sm">How it works →</Link>
-            <Link to="/community" className="btn btn-outline btn-sm">Join community →</Link>
+          <div className="hero-cta-row">
+            <button
+              className="btn btn-primary hero-cta-primary"
+              onClick={() => scannerRef.current?.scrollIntoView({ behavior: 'smooth' })}
+            >
+              ⚡ Analyze an Article
+            </button>
+            <Link to="/how-it-works" className="btn btn-outline hero-cta-outline">
+              How it works →
+            </Link>
           </div>
 
-          {/* Agent chips */}
-          <div className="home-agents-row">
-            {AGENT_CHIPS.map(a => (
-              <div key={a.n} className="home-agent-chip">
-                <span className="home-agent-num" style={{ background: a.color + '22', color: a.color, border: `1px solid ${a.color}44` }}>
-                  {a.n}
-                </span>
-                <span className="home-agent-label">{a.label}</span>
+          {/* Stats cards */}
+          <div className="hero-stats-grid">
+            {STATS.map(s => (
+              <div key={s.label} className="hero-stat-card">
+                <div className="hero-stat-icon">{s.icon}</div>
+                <div className="hero-stat-num">{s.num}</div>
+                <div className="hero-stat-label">{s.label}</div>
               </div>
             ))}
           </div>
-        </div>
 
-        {/* Ambient background shapes */}
-        <div className="home-hero-shape home-hero-shape-1" />
-        <div className="home-hero-shape home-hero-shape-2" />
-      </div>
-
-      {/* ── Right: Scanner panel ── */}
-      <div className="home-scanner-panel">
-        <div className="home-scanner-header">
-          <div className="home-scanner-header-left">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color:'#6366f1' }}>
-              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-            </svg>
-            <span className="home-scanner-title">Live Scanner</span>
-            <span className="home-scanner-live-dot" />
+          {/* Agent pipeline */}
+          <div className="hero-pipeline">
+            {AGENTS.map((a, i) => (
+              <div key={a.n} className="hero-pipeline-step">
+                <div
+                  className="hero-pipeline-icon"
+                  style={{ background: a.color + '18', border: `1.5px solid ${a.color}44` }}
+                >
+                  <span>{a.icon}</span>
+                  <span className="hero-pipeline-num" style={{ color: a.color }}>
+                    {a.n}
+                  </span>
+                </div>
+                <span className="hero-pipeline-name">{a.name}</span>
+                {i < AGENTS.length - 1 && (
+                  <div className="hero-pipeline-arrow">→</div>
+                )}
+              </div>
+            ))}
           </div>
-          <span className="home-scanner-hint">Paste article text or URL to verify</span>
+
+          {/* Trust strip */}
+          <div className="hero-trust-strip">
+            <span>Trusted by journalists, researchers &amp; educators</span>
+            <span className="hero-trust-dot" />
+            <span>No account required</span>
+            <span className="hero-trust-dot" />
+            <span>100% free, always</span>
+          </div>
         </div>
-        <div className="home-scanner-body">
-          <Scanner
-            scannerRef={scannerRef}
-            onAnalysisComplete={onArticleAnalyzed}
-            isEmbedded
-          />
+      </section>
+
+      {/* ── SCANNER ───────────────────────────────────────────── */}
+      <section className="home-scanner-full" id="scanner" ref={scannerRef}>
+        <div className="container">
+          <div className="home-scanner-heading">
+            <span className="section-label">🔍 Live Scanner</span>
+            <h2 className="home-scanner-title">
+              Verify Any Article — Right Now
+            </h2>
+            <p className="home-scanner-desc">
+              Paste article text or a URL below. Our multi-agent pipeline will run in seconds
+              and deliver a full breakdown: verdict, claims, evidence, heatmap, and bias analysis.
+            </p>
+          </div>
+
+          <div className="home-scanner-card">
+            <Scanner
+              scannerRef={scannerRef}
+              onAnalysisComplete={onArticleAnalyzed}
+              isEmbedded
+            />
+          </div>
         </div>
-      </div>
+      </section>
+
+      {/* ── FOOTER ────────────────────────────────────────────── */}
+      <Footer />
     </div>
   )
 }
