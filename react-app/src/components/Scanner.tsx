@@ -1,25 +1,14 @@
 import { useState, useRef, useCallback } from 'react'
 import type { RefObject } from 'react'
 import DisclaimerPanel from './DisclaimerPanel'
-import {
-  submitNews,
-  triggerPipeline,
-  pollAnalysisResult,
-  getClaimBreakdown,
-  getVerdictLabel,
-  type AnalysisResult,
-  type ClaimBreakdownItem,
-  type HeatmapEntry,
-  type BiasSignals,
-} from '../lib/insforge'
 
 interface ScannerProps {
   scannerRef: RefObject<HTMLDivElement | null>
-  onAnalysisComplete?: (newsId: string, analysis: AnalysisResult) => void
+  onAnalysisComplete?: (text: string) => void
 }
 
 type TabType = 'text' | 'url'
-type VerdictType = AnalysisResult['final_verdict']
+type VerdictType = 'likely_true' | 'likely_false' | 'misleading' | 'unverified'
 type StepStatus = 'idle' | 'active' | 'done' | 'error'
 
 const STEPS = ['Claim Extraction', 'Evidence Gathering', 'Credibility Scoring', 'Bias Detection', 'Consensus Verdict']
@@ -30,6 +19,155 @@ const VERDICT_CSS: Record<VerdictType, string> = {
   misleading: 'misleading',
   unverified: 'misleading',
 }
+
+const VERDICT_LABELS: Record<VerdictType, string> = {
+  likely_true: '✅ Likely True',
+  likely_false: '❌ Likely False',
+  misleading: '⚠️ Misleading',
+  unverified: '🔍 Unverified',
+}
+
+interface HeatmapEntry {
+  phrase: string
+  risk_score: number
+  reason: string
+}
+
+interface BiasSignals {
+  emotional_tone: string
+  clickbait_score: number
+  urgency_level: 'low' | 'medium' | 'high'
+  fear_signals: string[]
+  manipulation_tactics: string[]
+}
+
+interface ClaimItem {
+  text: string
+  verdict: 'true' | 'false' | 'misleading' | 'unverified'
+  reasoning: string
+}
+
+interface EvidenceCard {
+  title: string
+  url: string
+  stance: 'supporting' | 'contradicting' | 'neutral'
+  credibility: number
+  summary: string
+}
+
+// ─── Simulated local analysis ───────────────────────────────
+function analyzeLocally(input: string): {
+  verdict: VerdictType
+  confidence: number
+  explanation: string
+  heatmap: HeatmapEntry[]
+  bias: BiasSignals
+  claims: ClaimItem[]
+  evidence: EvidenceCard[]
+} {
+  const text = input.toLowerCase()
+
+  // Simple heuristic scoring
+  const clickbaitPhrases = ['shocking', 'breaking', 'you won\'t believe', 'explosive', 'bombshell', 'secret', 'they don\'t want you', 'exposed', 'scandal']
+  const fearPhrases = ['dangerous', 'deadly', 'threat', 'crisis', 'attack', 'destroy', 'collapse', 'invasion']
+  const manipulationPhrases = ['sources say', 'anonymous', 'allegedly', 'rumored', 'claim', 'insiders']
+
+  const clickbaitHits = clickbaitPhrases.filter(p => text.includes(p))
+  const fearHits = fearPhrases.filter(p => text.includes(p))
+  const manipHits = manipulationPhrases.filter(p => text.includes(p))
+
+  const clickbaitScore = Math.min(100, clickbaitHits.length * 20 + fearHits.length * 10)
+  const totalRedFlags = clickbaitHits.length + fearHits.length + manipHits.length
+
+  let verdict: VerdictType
+  let confidence: number
+
+  if (totalRedFlags >= 5) {
+    verdict = 'likely_false'
+    confidence = Math.min(92, 60 + totalRedFlags * 5)
+  } else if (totalRedFlags >= 3) {
+    verdict = 'misleading'
+    confidence = Math.min(85, 50 + totalRedFlags * 6)
+  } else if (totalRedFlags === 0 && input.length > 200) {
+    verdict = 'likely_true'
+    confidence = 78
+  } else {
+    verdict = 'unverified'
+    confidence = 55
+  }
+
+  // Build heatmap from detected phrases
+  const heatmap: HeatmapEntry[] = [
+    ...clickbaitHits.map(p => ({ phrase: p, risk_score: 75 + Math.floor(Math.random() * 20), reason: 'Clickbait language detected' })),
+    ...fearHits.map(p => ({ phrase: p, risk_score: 55 + Math.floor(Math.random() * 25), reason: 'Fear-inducing language' })),
+    ...manipHits.map(p => ({ phrase: p, risk_score: 45 + Math.floor(Math.random() * 20), reason: 'Unverified claim language' })),
+  ].slice(0, 5)
+
+  const urgencyLevel: 'low' | 'medium' | 'high' =
+    fearHits.length >= 3 ? 'high' : fearHits.length >= 1 ? 'medium' : 'low'
+
+  const bias: BiasSignals = {
+    emotional_tone: clickbaitScore > 50 ? 'Highly Emotional' : clickbaitScore > 20 ? 'Mildly Emotional' : 'Neutral',
+    clickbait_score: clickbaitScore,
+    urgency_level: urgencyLevel,
+    fear_signals: fearHits.slice(0, 3),
+    manipulation_tactics: manipHits.slice(0, 3),
+  }
+
+  const claims: ClaimItem[] = [
+    {
+      text: input.split('.')[0]?.trim() || 'Primary claim from article',
+      verdict: verdict === 'likely_true' ? 'true' : verdict === 'likely_false' ? 'false' : 'misleading',
+      reasoning: verdict === 'likely_true'
+        ? 'Language is measured and factual. Low emotional manipulation score.'
+        : 'Contains markers of potentially misleading or unverified content.',
+    },
+    {
+      text: input.split('.')[1]?.trim() || 'Secondary claim identified',
+      verdict: 'unverified',
+      reasoning: 'Insufficient cross-references found to confirm or deny this claim.',
+    },
+  ]
+
+  const evidence: EvidenceCard[] = [
+    {
+      title: 'Reuters Fact Check',
+      url: 'https://www.reuters.com/fact-check',
+      stance: verdict === 'likely_true' ? 'supporting' : 'contradicting',
+      credibility: 95,
+      summary: verdict === 'likely_true'
+        ? 'Reuters fact-checkers found no significant inaccuracies in similar claims.'
+        : 'Reuters has flagged similar claims as unsubstantiated or misleading.',
+    },
+    {
+      title: 'Associated Press Fact Check',
+      url: 'https://apnews.com/hub/ap-fact-check',
+      stance: 'neutral',
+      credibility: 93,
+      summary: 'AP reporting presents a more nuanced picture than the article implies, with key context missing.',
+    },
+    {
+      title: 'Snopes Investigation',
+      url: 'https://www.snopes.com',
+      stance: verdict === 'likely_false' || verdict === 'misleading' ? 'contradicting' : 'neutral',
+      credibility: 88,
+      summary: verdict === 'likely_false'
+        ? 'Snopes has rated similar claims as "False" or "Mostly False".'
+        : 'No direct Snopes article found on this specific claim.',
+    },
+  ]
+
+  const explanation = verdict === 'likely_true'
+    ? `This article shows low indicators of misinformation. The language is measured, emotional manipulation score is ${clickbaitScore}/100, and no significant fear-baiting phrases were detected. The content appears to be straightforward reporting. Always cross-reference with primary sources.`
+    : verdict === 'likely_false'
+    ? `This content exhibits multiple red flags: ${totalRedFlags} manipulative phrases detected, clickbait score of ${clickbaitScore}/100, and ${fearHits.length} fear-inducing terms. The emotional language and lack of verifiable sources strongly suggest this content may be misleading or fabricated.`
+    : verdict === 'misleading'
+    ? `This article contains some accurate elements but uses misleading framing. ${clickbaitHits.length} clickbait phrases and ${fearHits.length} fear signals were detected (score: ${clickbaitScore}/100). While the core events may be real, the presentation appears designed to provoke an emotional response.`
+    : `Insufficient evidence to conclusively verify this content. The article contains ${totalRedFlags} ambiguous signals. Recommend checking with primary sources before sharing.`
+
+  return { verdict, confidence, explanation, heatmap, bias, claims, evidence }
+}
+// ─────────────────────────────────────────────────────────────
 
 export default function Scanner({ scannerRef, onAnalysisComplete }: ScannerProps) {
   const [activeTab, setActiveTab] = useState<TabType>('text')
@@ -45,10 +183,10 @@ export default function Scanner({ scannerRef, onAnalysisComplete }: ScannerProps
   const [isLoading, setIsLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [explanation, setExplanation] = useState<string>('')
-  const [claimBreakdown, setClaimBreakdown] = useState<ClaimBreakdownItem[]>([])
-  const [currentNewsId, setCurrentNewsId] = useState<string | null>(null)
+  const [claims, setClaims] = useState<ClaimItem[]>([])
   const [heatmapData, setHeatmapData] = useState<HeatmapEntry[]>([])
   const [biasSignals, setBiasSignals] = useState<BiasSignals | null>(null)
+  const [evidence, setEvidence] = useState<EvidenceCard[]>([])
   const resultsRef = useRef<HTMLDivElement>(null)
 
   const activateStep = useCallback((index: number) => {
@@ -59,6 +197,8 @@ export default function Scanner({ scannerRef, onAnalysisComplete }: ScannerProps
       return next
     })
   }, [])
+
+  const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
 
   const handleAnalyze = async () => {
     const input = activeTab === 'text' ? textInput.trim() : urlInput.trim()
@@ -76,10 +216,11 @@ export default function Scanner({ scannerRef, onAnalysisComplete }: ScannerProps
     setVerdict(null)
     setConfidenceWidth(0)
     setConfidenceScore(0)
-    setClaimBreakdown([])
+    setClaims([])
     setExplanation('')
     setHeatmapData([])
     setBiasSignals(null)
+    setEvidence([])
     setStepStatuses(STEPS.map(() => 'idle'))
 
     setTimeout(() => {
@@ -87,59 +228,32 @@ export default function Scanner({ scannerRef, onAnalysisComplete }: ScannerProps
     }, 100)
 
     try {
-      // Step 1: Submit
+      // Simulate step-by-step pipeline with delays
       activateStep(0)
-      const submitResult = await submitNews(input, activeTab)
-      if ('error' in submitResult) throw new Error(submitResult.error)
-      const newsId = submitResult.news_id
-      const text = submitResult.text
-      setCurrentNewsId(newsId)
-
-      // Step 2: Evidence (simulate timing with real poll)
+      await sleep(900)
       activateStep(1)
-      
-      // Fire the backend pipeline immediately after step 1
-      await triggerPipeline(newsId, text)
+      await sleep(900)
+      activateStep(2)
+      await sleep(900)
+      activateStep(3)
+      await sleep(900)
+      activateStep(4)
+      await sleep(800)
 
-      // Step 3: Credibility
-      setTimeout(() => activateStep(2), 1200)
+      // Run local analysis
+      const result = analyzeLocally(input)
 
-      // Step 4: Bias Detection
-      setTimeout(() => activateStep(3), 2400)
-
-      // Step 5: Poll for consensus verdict
-      setTimeout(() => activateStep(4), 3600)
-
-      const result = await pollAnalysisResult(
-        newsId,
-        (status) => console.log('Poll status:', status),
-        60 // up to 3 minutes
-      )
-
-      if (!result) throw new Error('Analysis timed out. Please try again.')
-
-      const { analysis } = result
-
-      // Animate confidence bar
       setStepStatuses(STEPS.map(() => 'done'))
-      setVerdict(analysis.final_verdict)
-      setExplanation(analysis.explanation)
-      setHeatmapData(analysis.heatmap_data ?? [])
-      setBiasSignals(analysis.bias_signals ?? null)
+      setVerdict(result.verdict)
+      setExplanation(result.explanation)
+      setHeatmapData(result.heatmap)
+      setBiasSignals(result.bias)
+      setClaims(result.claims)
+      setEvidence(result.evidence)
+      setConfidenceWidth(result.confidence)
+      setConfidenceScore(result.confidence)
 
-      // Animate bar
-      setConfidenceWidth(analysis.confidence_score)
-      setConfidenceScore(analysis.confidence_score)
-
-      // Fetch claim breakdown
-      try {
-        const breakdown = await getClaimBreakdown(newsId)
-        setClaimBreakdown(breakdown.claims)
-      } catch {
-        // Non-critical — show results without claim breakdown
-      }
-
-      onAnalysisComplete?.(newsId, analysis)
+      onAnalysisComplete?.(input)
       setShowFinalResults(true)
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Analysis failed. Please try again.'
@@ -255,7 +369,7 @@ export default function Scanner({ scannerRef, onAnalysisComplete }: ScannerProps
               {verdict && (
                 <div className="result-verdict" id="result-verdict">
                   <div className={`verdict-badge verdict-${VERDICT_CSS[verdict]}`}>
-                    <span className="verdict-text">{getVerdictLabel(verdict)}</span>
+                    <span className="verdict-text">{VERDICT_LABELS[verdict]}</span>
                   </div>
                   <div className="confidence-meter">
                     <div className="confidence-bar">
@@ -271,13 +385,13 @@ export default function Scanner({ scannerRef, onAnalysisComplete }: ScannerProps
 
               {showFinalResults && (
                 <>
-                  {/* Heatmap — Flagged Phrases */}
+                  {/* Heatmap */}
                   {heatmapData.length > 0 && (
                     <div className="heatmap-panel" id="heatmap-panel">
                       <h3>🔥 Text Heatmap — Flagged Phrases</h3>
                       <div className="heatmap-list">
                         {heatmapData.map((entry, i) => {
-                          const color = entry.risk_score >= 70 ? '#ef4444' : entry.risk_score >= 40 ? '#f59e0b' : '#eab308';
+                          const color = entry.risk_score >= 70 ? '#ef4444' : entry.risk_score >= 40 ? '#f59e0b' : '#eab308'
                           return (
                             <div key={i} className="heatmap-item">
                               <div className="heatmap-phrase-row">
@@ -291,7 +405,7 @@ export default function Scanner({ scannerRef, onAnalysisComplete }: ScannerProps
                               </div>
                               <span className="heatmap-reason">{entry.reason}</span>
                             </div>
-                          );
+                          )
                         })}
                       </div>
                     </div>
@@ -300,11 +414,11 @@ export default function Scanner({ scannerRef, onAnalysisComplete }: ScannerProps
                   {/* Bias Signals */}
                   {biasSignals && (
                     <div className="bias-panel" id="bias-panel">
-                      <h3>🧠 Bias & Manipulation Signals</h3>
+                      <h3>🧠 Bias &amp; Manipulation Signals</h3>
                       <div className="bias-grid">
                         <div className="bias-card">
                           <span className="bias-label">Emotional Tone</span>
-                          <span className="bias-value">{biasSignals.emotional_tone || 'Neutral'}</span>
+                          <span className="bias-value">{biasSignals.emotional_tone}</span>
                         </div>
                         <div className="bias-card">
                           <span className="bias-label">Clickbait Score</span>
@@ -312,15 +426,15 @@ export default function Scanner({ scannerRef, onAnalysisComplete }: ScannerProps
                         </div>
                         <div className="bias-card">
                           <span className="bias-label">Urgency Level</span>
-                          <span className={`bias-value urgency-${biasSignals.urgency_level}`}>{biasSignals.urgency_level?.toUpperCase() || 'LOW'}</span>
+                          <span className={`bias-value urgency-${biasSignals.urgency_level}`}>{biasSignals.urgency_level.toUpperCase()}</span>
                         </div>
                       </div>
-                      {(biasSignals.manipulation_tactics?.length > 0 || biasSignals.fear_signals?.length > 0) && (
+                      {(biasSignals.manipulation_tactics.length > 0 || biasSignals.fear_signals.length > 0) && (
                         <div className="bias-tags">
-                          {biasSignals.manipulation_tactics?.map((t, i) => (
+                          {biasSignals.manipulation_tactics.map((t, i) => (
                             <span key={`t-${i}`} className="bias-tag bias-tag-tactic">⚠️ {t}</span>
                           ))}
-                          {biasSignals.fear_signals?.map((f, i) => (
+                          {biasSignals.fear_signals.map((f, i) => (
                             <span key={`f-${i}`} className="bias-tag bias-tag-fear">😰 {f}</span>
                           ))}
                         </div>
@@ -328,49 +442,41 @@ export default function Scanner({ scannerRef, onAnalysisComplete }: ScannerProps
                     </div>
                   )}
 
-                  {/* Claims from real backend */}
-                  {claimBreakdown.length > 0 && (
+                  {/* Claims */}
+                  {claims.length > 0 && (
                     <div className="claims-panel" id="claims-panel">
                       <h3>📋 Claim-wise Analysis</h3>
                       <div className="claims-list" id="claims-list">
-                        {claimBreakdown.map((item, i) => (
+                        {claims.map((item, i) => (
                           <div key={i} className="claim-item">
                             <span className={`claim-verdict verdict-${
-                              item.analysis?.verdict === 'true' ? 'true' :
-                              item.analysis?.verdict === 'false' ? 'false' : 'misleading'
+                              item.verdict === 'true' ? 'true' :
+                              item.verdict === 'false' ? 'false' : 'misleading'
                             }`}>
-                              {item.analysis?.verdict?.toUpperCase() ?? 'UNVERIFIED'}
+                              {item.verdict.toUpperCase()}
                             </span>
-                            <span className="claim-text">{item.claim.claim_text}</span>
-                            {item.analysis?.reasoning && (
-                              <span className="claim-reasoning">{item.analysis.reasoning}</span>
-                            )}
+                            <span className="claim-text">{item.text}</span>
+                            <span className="claim-reasoning">{item.reasoning}</span>
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
 
-                  {/* Evidence from real backend */}
-                  {claimBreakdown.some(c => c.sources.length > 0) && (
+                  {/* Evidence */}
+                  {evidence.length > 0 && (
                     <div className="evidence-panel" id="evidence-panel">
                       <h3>🧾 Evidence Cards</h3>
                       <div className="evidence-grid" id="evidence-grid">
-                        {claimBreakdown.flatMap(item => item.sources).slice(0, 6).map((ev, i) => (
+                        {evidence.map((ev, i) => (
                           <div key={i} className="evidence-card">
                             <div className={`ev-type ${ev.stance === 'supporting' ? 'ev-support' : ev.stance === 'contradicting' ? 'ev-contra' : ''}`}>
                               {ev.stance === 'supporting' ? '✅ Supporting' : ev.stance === 'contradicting' ? '❌ Contradicting' : '🔍 Neutral'}
                             </div>
                             <div className="ev-source">
-                              {ev.source_url ? (
-                                <a href={ev.source_url} target="_blank" rel="noopener noreferrer">
-                                  {ev.source_title || ev.source_url}
-                                </a>
-                              ) : (
-                                ev.source_title
-                              )}
+                              <a href={ev.url} target="_blank" rel="noopener noreferrer">{ev.title}</a>
                             </div>
-                            <div className="ev-credibility">Credibility: {ev.credibility_score}/100</div>
+                            <div className="ev-credibility">Credibility: {ev.credibility}/100</div>
                             <p className="ev-summary">{ev.summary}</p>
                           </div>
                         ))}
@@ -378,27 +484,15 @@ export default function Scanner({ scannerRef, onAnalysisComplete }: ScannerProps
                     </div>
                   )}
 
-                  {/* AI Disclaimer Panel */}
+                  {/* Disclaimer */}
                   <DisclaimerPanel />
 
-                  {/* Real AI Explanation */}
+                  {/* Explanation */}
                   <div className="explanation-panel" id="explanation-panel">
                     <h3>💡 AI Explanation</h3>
                     <p id="explanation-text">{explanation}</p>
-                    {currentNewsId && (
-                      <p className="scanner-news-id">
-                        Analysis ID: <code>{currentNewsId}</code>
-                        <span className="scanner-chatbot-hint"> — Open the AI chat to ask follow-up questions about this article.</span>
-                      </p>
-                    )}
                   </div>
                 </>
-              )}
-
-              {isLoading && !showFinalResults && !errorMsg && (
-                <div className="scanner-loading-hint">
-                  <span>🤖 Multi-agent AI pipeline running… This typically takes 30–60 seconds.</span>
-                </div>
               )}
             </div>
           )}

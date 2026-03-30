@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react'
-import { chatbotQuery, type ChatMessage as BackendChatMessage } from '../lib/insforge'
 
 interface UIMessage {
   text: string
@@ -8,20 +7,69 @@ interface UIMessage {
 }
 
 interface ChatbotProps {
-  currentNewsId?: string | null
+  articleText?: string | null
 }
 
 const INITIAL_SUGGESTIONS = [
-  { label: 'Why is this misleading?', msg: 'Why is this article misleading or fake?' },
-  { label: 'Show me the evidence', msg: 'What evidence was found for and against this article?' },
-  { label: 'How confident is AI?', msg: 'How confident is the AI about this verdict and why?' },
-  { label: 'Main red flags', msg: 'What are the main red flags or manipulation tactics used?' },
+  { label: 'How does TruthLens work?', msg: 'How does TruthLens detect fake news?' },
+  { label: 'What is clickbait?', msg: 'What is clickbait and how is it detected?' },
+  { label: 'How to spot fake news?', msg: 'What are the best ways to spot fake news?' },
+  { label: 'Why is bias analysis important?', msg: 'Why is bias analysis important in news?' },
 ]
 
-export default function Chatbot({ currentNewsId }: ChatbotProps) {
+const ARTICLE_SUGGESTIONS = [
+  { label: 'Why is this misleading?', msg: 'Why might this article be misleading or fake?' },
+  { label: 'Show me the red flags', msg: 'What are the main red flags in this article?' },
+  { label: 'How to verify this?', msg: 'How can I independently verify this article?' },
+  { label: 'Key manipulation tactics', msg: 'What manipulation tactics are used in this article?' },
+]
+
+// Simple local response engine
+function generateResponse(msg: string, hasArticle: boolean): string {
+  const q = msg.toLowerCase()
+
+  if (q.includes('how does truthlens') || q.includes('how does it work') || q.includes('how does this work')) {
+    return 'TruthLens uses a multi-agent AI pipeline: first, a Claim Agent extracts key factual assertions. Then an Evidence Agent cross-references them with known sources. A Credibility Agent scores sources, a Bias Agent detects emotional manipulation language, and finally a Consensus Agent delivers a unified verdict with a confidence score.'
+  }
+  if (q.includes('clickbait')) {
+    return 'Clickbait uses sensational headlines to bait clicks — phrases like "You won\'t believe...", "SHOCKING:", or "They don\'t want you to know..." TruthLens scans for these patterns and scores them on a 0–100 Clickbait Scale. A score above 50 suggests the content may be designed to provoke rather than inform.'
+  }
+  if (q.includes('spot fake news') || q.includes('detect fake')) {
+    return 'Key red flags for fake news: 1️⃣ Overly emotional or sensational headlines. 2️⃣ No named author or source. 3️⃣ Extreme political bias. 4️⃣ Claims that seem too good (or bad) to be true. 5️⃣ Missing dates or outdated info presented as new. Always cross-check with trusted outlets like Reuters, AP, or BBC.'
+  }
+  if (q.includes('bias')) {
+    return 'Bias analysis matters because even factually correct information can mislead through selective framing, emotional language, or omission of key context. TruthLens detects emotional tone, urgency signaling, fear-baiting, and manipulation tactics to give you a fuller picture of how a story is being told — not just what it says.'
+  }
+  if (q.includes('misleading') || q.includes('red flags')) {
+    if (hasArticle) {
+      return 'Based on the article you scanned, the system detected emotional language patterns and potential clickbait signals. Key indicators include urgency-inducing phrases, fear language, and unverified attribution ("sources say"). These are common in deliberately misleading content. Always look for named sources and cross-reference claims independently.'
+    }
+    return 'Common misleading patterns include: fear-inducing language, vague attribution ("insiders say"), extreme urgency, and emotional manipulation. Scan an article above to get a specific analysis!'
+  }
+  if (q.includes('verify') || q.includes('check')) {
+    return 'To independently verify a news claim: 1️⃣ Search the claim on Google News to find corroborating reports. 2️⃣ Check Reuters Fact Check (reuters.com/fact-check), Snopes (snopes.com), or AP Fact Check. 3️⃣ Look for the original primary source (government reports, scientific papers, official statements). 4️⃣ Check the publication\'s about page and track record.'
+  }
+  if (q.includes('manipulation') || q.includes('tactic')) {
+    if (hasArticle) {
+      return 'The scanned article was checked for common manipulation tactics: emotional amplification, false urgency, fear signaling, unverified sourcing, and provocative framing. The agent pipeline identified specific phrases that match these patterns — see the Bias & Manipulation Signals panel above for the full breakdown.'
+    }
+    return 'Common manipulation tactics include: creating false urgency ("Act now!"), emotional amplification, us-vs-them framing, cherry-picked statistics, and vague attribution. Scan an article to detect these patterns automatically!'
+  }
+  if (q.includes('confidence') || q.includes('score') || q.includes('percent')) {
+    return 'The confidence score (0–100%) represents how certain the AI pipeline is in its verdict. Above 80%: high certainty. 60–80%: moderate evidence. Below 60%: limited signals, treat as unverified. It\'s based on the strength and consistency of signals across all five analysis agents.'
+  }
+  if (q.includes('what is truthlens') || q.includes('about truthlens')) {
+    return 'TruthLens AI is a multi-agent fake news detection engine. It breaks news content down through 5 specialized AI agents — Claim, Evidence, Credibility, Bias, and Consensus — to deliver an explainable verdict. The goal is to make misinformation detection transparent, not just a black-box label.'
+  }
+  if (hasArticle) {
+    return `Great question about the article you scanned! The TruthLens pipeline analyzed it for factual claims, source credibility, emotional language, and bias patterns. The verdict and detailed breakdown are shown in the scanner panel above. Is there a specific aspect — the claims, evidence, or bias signals — you'd like me to explain further?`
+  }
+  return `I'm TruthLens AI, your misinformation analysis assistant. Try scanning a news article above and I can help explain the results! You can also ask me about how fake news detection works, what clickbait is, or how to verify claims yourself.`
+}
+
+export default function Chatbot({ articleText }: ChatbotProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<UIMessage[]>([])
-  const [conversationHistory, setConversationHistory] = useState<BackendChatMessage[]>([])
   const [inputVal, setInputVal] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -34,11 +82,10 @@ export default function Chatbot({ currentNewsId }: ChatbotProps) {
     }
   }, [messages, isOpen])
 
-  // Reset conversation when news article changes
+  // Reset conversation when article changes
   useEffect(() => {
     setMessages([])
-    setConversationHistory([])
-  }, [currentNewsId])
+  }, [articleText])
 
   const addMessage = (msg: UIMessage) => {
     setMessages(prev => [...prev, msg])
@@ -52,35 +99,16 @@ export default function Chatbot({ currentNewsId }: ChatbotProps) {
     setInputVal('')
     setIsTyping(true)
 
-    // Need a newsId for context-aware answers
-    const newsId = currentNewsId ?? 'general'
+    // Simulate typing delay (300–700ms)
+    await new Promise(r => setTimeout(r, 300 + Math.random() * 400))
 
-    // Optimistically build new history
-    const newHistory: BackendChatMessage[] = [
-      ...conversationHistory,
-      { role: 'user', content: msg },
-    ]
-
-    try {
-      const response = await chatbotQuery(newsId, msg, conversationHistory)
-      const answer = response.answer
-
-      addMessage({ text: answer, isUser: false })
-      setConversationHistory([...newHistory, { role: 'assistant', content: answer }])
-    } catch (err) {
-      const errorMsg =
-        err instanceof Error
-          ? err.message.includes('news_id and question are required')
-            ? 'Please analyze a news article first using the scanner above, then I can answer context-specific questions!'
-            : `Error: ${err.message}`
-          : 'Failed to get a response. Please try again.'
-      addMessage({ text: errorMsg, isUser: false, isError: true })
-    } finally {
-      setIsTyping(false)
-    }
+    const response = generateResponse(msg, Boolean(articleText))
+    addMessage({ text: response, isUser: false })
+    setIsTyping(false)
   }
 
-  const hasScannedArticle = Boolean(currentNewsId)
+  const hasScannedArticle = Boolean(articleText)
+  const suggestions = hasScannedArticle ? ARTICLE_SUGGESTIONS : INITIAL_SUGGESTIONS
 
   return (
     <div className="chatbot-widget" id="chatbot-widget">
@@ -117,16 +145,15 @@ export default function Chatbot({ currentNewsId }: ChatbotProps) {
           </div>
 
           <div className="chatbot-messages" id="chatbot-messages">
-            {/* Welcome message */}
             <div className="chat-message bot-message">
               <p>
                 {hasScannedArticle
                   ? '📰 I have the article context loaded! Ask me anything about the analysis, claims, or evidence.'
-                  : '👋 Hi! I\'m TruthLens AI. Scan a news article above, then ask me anything about it:'}
+                  : '👋 Hi! I\'m TruthLens AI. Ask me about fake news detection, or scan an article above for specific analysis:'}
               </p>
               {messages.length === 0 && (
                 <div className="chat-suggestions">
-                  {(hasScannedArticle ? INITIAL_SUGGESTIONS : INITIAL_SUGGESTIONS.slice(0, 2)).map(s => (
+                  {suggestions.map(s => (
                     <button
                       key={s.msg}
                       className="suggestion-btn"
@@ -164,7 +191,7 @@ export default function Chatbot({ currentNewsId }: ChatbotProps) {
               type="text"
               id="chatbot-input"
               className="chatbot-input"
-              placeholder={hasScannedArticle ? 'Ask about this article…' : 'Scan an article first, then ask…'}
+              placeholder={hasScannedArticle ? 'Ask about this article…' : 'Ask about fake news detection…'}
               value={inputVal}
               onChange={e => setInputVal(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleSend() }}

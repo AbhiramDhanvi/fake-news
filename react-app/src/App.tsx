@@ -12,12 +12,11 @@ import Comparison from './components/Comparison'
 import Chatbot from './components/Chatbot'
 import Contact from './components/Contact'
 import Footer from './components/Footer'
-import type { AnalysisResult } from './lib/insforge'
 
 function App() {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark')
   const scannerRef = useRef<HTMLDivElement>(null)
-  const [currentNewsId, setCurrentNewsId] = useState<string | null>(null)
+  const [currentArticleText, setCurrentArticleText] = useState<string | null>(null)
 
   useEffect(() => {
     const saved = localStorage.getItem('theme') as 'dark' | 'light' | null
@@ -31,10 +30,6 @@ function App() {
 
   const handleThemeToggle = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark')
 
-  const handleAnalysisComplete = (newsId: string, _analysis: AnalysisResult) => {
-    setCurrentNewsId(newsId)
-  }
-
   return (
     <>
       <Navbar theme={theme} onThemeToggle={handleThemeToggle} />
@@ -45,7 +40,7 @@ function App() {
         <HowItWorks />
         <Agents />
         <div ref={scannerRef} id="scanner">
-          <Scanner scannerRef={scannerRef} onAnalysisComplete={handleAnalysisComplete} />
+          <Scanner scannerRef={scannerRef} onAnalysisComplete={setCurrentArticleText} />
         </div>
         <KnowledgeGraph />
         <ShaderAnimation />
@@ -53,8 +48,7 @@ function App() {
         <Contact />
       </main>
       <Footer />
-      {/* Chatbot receives current article context */}
-      <Chatbot currentNewsId={currentNewsId} />
+      <Chatbot articleText={currentArticleText} />
     </>
   )
 }
