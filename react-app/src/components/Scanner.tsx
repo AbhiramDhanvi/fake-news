@@ -6,6 +6,7 @@ import DisclaimerPanel from './DisclaimerPanel'
 interface ScannerProps {
   scannerRef: RefObject<HTMLDivElement | null>
   onAnalysisComplete?: (text: string) => void
+  isEmbedded?: boolean
 }
 
 type TabType = 'text' | 'url'
@@ -170,7 +171,7 @@ function analyzeLocally(input: string): {
 }
 // ─────────────────────────────────────────────────────────────
 
-export default function Scanner({ scannerRef, onAnalysisComplete }: ScannerProps) {
+export default function Scanner({ scannerRef, onAnalysisComplete, isEmbedded = false }: ScannerProps) {
   const [activeTab, setActiveTab] = useState<TabType>('text')
   const [textInput, setTextInput] = useState('')
   const [urlInput, setUrlInput] = useState('')
@@ -263,6 +264,76 @@ export default function Scanner({ scannerRef, onAnalysisComplete }: ScannerProps
     } finally {
       setIsLoading(false)
     }
+  }
+
+
+  if (isEmbedded) {
+
+    return (
+      <div className="scanner-embed">
+        <div className="scanner-input-area">
+          <div className="scanner-tabs">
+            <button className={`scanner-tab${activeTab==='text'?' active':''}`} onClick={() => setActiveTab('text')}>📝 Text</button>
+            <button className={`scanner-tab${activeTab==='url'?' active':''}`} onClick={() => setActiveTab('url')}>🔗 URL</button>
+          </div>
+          {activeTab === 'text' ? (
+            <div className="scanner-input-group">
+              <textarea id="scanner-textarea" className="scanner-textarea scanner-textarea-embed" placeholder="Paste article text here for AI analysis…" rows={5} value={textInput} onChange={e => setTextInput(e.target.value)}/>
+            </div>
+          ) : (
+            <div className="scanner-input-group">
+              <div className="scanner-url-input-row">
+                <input id="scanner-url" className="scanner-url-input" type="url" placeholder="https://example.com/article..." value={urlInput} onChange={e => setUrlInput(e.target.value)}/>
+              </div>
+            </div>
+          )}
+          <div className="scanner-actions">
+            <button className="btn btn-primary scanner-btn" id="scanner-analyze-btn" onClick={handleAnalyze} disabled={isLoading}>
+              {btnText ?? (isLoading ? '⚡ Analysing…' : '⚡ Analyze Article')}
+            </button>
+          </div>
+        </div>
+        {showResults && (
+          <div className="scanner-results scanner-results-embed" ref={resultsRef}>
+            <div className="scanner-steps" id="scanner-steps">
+              {STEPS.map((step, i) => (
+                <div key={step} className={`scanner-step scanner-step-${stepStatuses[i]}`}>
+                  <div className="step-indicator"><span className="step-num">{i+1}</span></div>
+                  <span className="step-name">{step}</span>
+                </div>
+              ))}
+            </div>
+            {errorMsg && <div className="scanner-error"><p>{errorMsg}</p></div>}
+            {showFinalResults && verdict && (
+              <>
+                <div className={`verdict-panel verdict-${VERDICT_CSS[verdict]}`}>
+                  <div className="verdict-header">
+                    <span className="verdict-label" id="verdict-label">{VERDICT_LABELS[verdict]}</span>
+                    <span className="verdict-confidence" id="verdict-confidence">{confidenceScore}% confidence</span>
+                  </div>
+                  <div className="confidence-bar"><div className="confidence-fill" id="confidence-fill" style={{ width:`${confidenceWidth}%` }}/></div>
+                </div>
+                {heatmapData.length > 0 && (
+                  <div className="heatmap-panel"><h3>🌡️ Risk Heatmap</h3><div className="heatmap-tokens">{heatmapData.map((e,i)=>(<span key={i} className="heatmap-token" style={{ background:`rgba(239,68,68,${e.risk_score/100*.7})`,color:e.risk_score>60?'#fff':undefined }} title={e.reason}>{e.phrase}</span>))}</div></div>
+                )}
+                {biasSignals && (
+                  <div className="bias-panel"><h3>⚖️ Bias Signals</h3><div className="bias-grid"><div className="bias-item"><span className="bias-label">Emotional tone</span><span className="bias-value">{biasSignals.emotional_tone}</span></div><div className="bias-item"><span className="bias-label">Clickbait</span><span className="bias-value">{biasSignals.clickbait_score}/100</span></div><div className="bias-item"><span className="bias-label">Urgency</span><span className="bias-value">{biasSignals.urgency_level}</span></div></div>{biasSignals.manipulation_tactics.length>0&&<div className="bias-tags">{biasSignals.manipulation_tactics.map((t,i)=><span key={i} className="bias-tag bias-tag-tactic">{t}</span>)}</div>}</div>
+                )}
+                {claims.length > 0 && (
+                  <div className="claims-panel"><h3>🔎 Claims Breakdown</h3>{claims.map((c,i)=>(<div key={i} className="claim-item"><div className="claim-header"><span className="claim-number">Claim #{i+1}</span><span className={`claim-verdict claim-verdict-${c.verdict}`}>{c.verdict}</span></div><p className="claim-text">{c.text}</p><p className="claim-reasoning">{c.reasoning}</p></div>))}</div>
+                )}
+                {evidence.length > 0 && (
+                  <div className="evidence-panel"><h3>📂 Evidence Sources</h3>{evidence.map((ev,i)=>(<div key={i} className={`evidence-card evidence-${ev.stance}`}><div className="ev-header"><span className={`ev-stance ev-stance-${ev.stance}`}>{ev.stance}</span><a href={ev.url} target="_blank" rel="noopener noreferrer" className="ev-link">{ev.title}</a></div><div className="ev-credibility">Credibility: {ev.credibility}/100</div><p className="ev-summary">{ev.summary}</p></div>))}</div>
+                )}
+                <DisclaimerPanel />
+                <NewsArticlesPanel verdict={verdict} inputText={activeTab==='text'?textInput:urlInput} />
+                <div className="explanation-panel"><h3>💡 AI Explanation</h3><p>{explanation}</p></div>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    )
   }
 
   return (
